@@ -1,0 +1,236 @@
+{
+  "title": "Alternate Quiz",
+  "isPlaceholder": false,
+  "questions": [
+    {
+      "id": "alt-1",
+      "text": "Alternate question 1 with an unbroken word SupercalifragilisticexpialidociousSupercalifragilisticexpialidociousSupercalifragilisticexpialidociousSupercalifragilisticexpialidocious and a very long address https://example.com/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa to test wrapping at narrow widths",
+      "options": [
+        {
+          "id": "w",
+          "text": "Option with unbroken text SupercalifragilisticexpialidociousSupercalifragilisticexpialidociousSupercalifragilisticexpialidociousSupercalifragilisticexpialidociousSupercalifragilisticexpialidociousSupercalifragilisticexpialidociousSupercalifragilisticexpialidociousSupercalifragilisticexpialidocious"
+        },
+        {
+          "id": "x",
+          "text": "Option with address https://example.com/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        {
+          "id": "y",
+          "text": "Alternate option Y for question 1"
+        },
+        {
+          "id": "z",
+          "text": "Alternate option Z for question 1"
+        }
+      ],
+      "correctOptionId": "w"
+    },
+    {
+      "id": "alt-2",
+      "text": "Alternate question 2 with a long sentence that keeps going and going so that it must wrap across many lines on a narrow phone screen without causing any horizontal scrolling at all",
+      "options": [
+        {
+          "id": "w",
+          "text": "Alternate option W for question 2"
+        },
+        {
+          "id": "x",
+          "text": "Alternate option X for question 2"
+        },
+        {
+          "id": "y",
+          "text": "Alternate option Y for question 2"
+        },
+        {
+          "id": "z",
+          "text": "Alternate option Z for question 2"
+        }
+      ],
+      "correctOptionId": "z"
+    },
+    {
+      "id": "alt-3",
+      "text": "Alternate question 3 about a different topic",
+      "options": [
+        {
+          "id": "w",
+          "text": "Alternate option W for question 3"
+        },
+        {
+          "id": "x",
+          "text": "Alternate option X for question 3"
+        },
+        {
+          "id": "y",
+          "text": "Alternate option Y for question 3"
+        },
+        {
+          "id": "z",
+          "text": "Alternate option Z for question 3"
+        }
+      ],
+      "correctOptionId": "y"
+    },
+    {
+      "id": "alt-4",
+      "text": "Alternate question 4 about a different topic",
+      "options": [
+        {
+          "id": "w",
+          "text": "Alternate option W for question 4"
+        },
+        {
+          "id": "x",
+          "text": "Alternate option X for question 4"
+        },
+        {
+          "id": "y",
+          "text": "Alternate option Y for question 4"
+        },
+        {
+          "id": "z",
+          "text": "Alternate option Z for question 4"
+        }
+      ],
+      "correctOptionId": "x"
+    },
+    {
+      "id": "alt-5",
+      "text": "Alternate question 5 about a different topic",
+      "options": [
+        {
+          "id": "w",
+          "text": "Alternate option W for question 5"
+        },
+        {
+          "id": "x",
+          "text": "Alternate option X for question 5"
+        },
+        {
+          "id": "y",
+          "text": "Alternate option Y for question 5"
+        },
+        {
+          "id": "z",
+          "text": "Alternate option Z for question 5"
+        }
+      ],
+      "correctOptionId": "w"
+    },
+    {
+      "id": "alt-6",
+      "text": "Alternate question 6 about a different topic",
+      "options": [
+        {
+          "id": "w",
+          "text": "Alternate option W for question 6"
+        },
+        {
+          "id": "x",
+          "text": "Alternate option X for question 6"
+        },
+        {
+          "id": "y",
+          "text": "Alternate option Y for question 6"
+        },
+        {
+          "id": "z",
+          "text": "Alternate option Z for question 6"
+        }
+      ],
+      "correctOptionId": "z"
+    },
+    {
+      "id": "alt-7",
+      "text": "Alternate question 7 about a different topic",
+      "options": [
+        {
+          "id": "w",
+          "text": "Alternate option W for question 7"
+        },
+        {
+          "id": "x",
+          "text": "Alternate option X for question 7"
+        },
+        {
+          "id": "y",
+          "text": "Alternate option Y for question 7"
+        },
+        {
+          "id": "z",
+          "text": "Alternate option Z for question 7"
+        }
+      ],
+      "correctOptionId": "y"
+    },
+    {
+      "id": "alt-8",
+      "text": "Alternate question 8 about a different topic",
+      "options": [
+        {
+          "id": "w",
+          "text": "Alternate option W for question 8"
+        },
+        {
+          "id": "x",
+          "text": "Alternate option X for question 8"
+        },
+        {
+          "id": "y",
+          "text": "Alternate option Y for question 8"
+        },
+        {
+          "id": "z",
+          "text": "Alternate option Z for question 8"
+        }
+      ],
+      "correctOptionId": "x"
+    },
+    {
+      "id": "alt-9",
+      "text": "Alternate question 9 about a different topic",
+      "options": [
+        {
+          "id": "w",
+          "text": "Alternate option W for question 9"
+        },
+        {
+          "id": "x",
+          "text": "Alternate option X for question 9"
+        },
+        {
+          "id": "y",
+          "text": "Alternate option Y for question 9"
+        },
+        {
+          "id": "z",
+          "text": "Alternate option Z for question 9"
+        }
+      ],
+      "correctOptionId": "w"
+    },
+    {
+      "id": "alt-10",
+      "text": "Alternate question 10 about a different topic",
+      "options": [
+        {
+          "id": "w",
+          "text": "Alternate option W for question 10"
+        },
+        {
+          "id": "x",
+          "text": "Alternate option X for question 10"
+        },
+        {
+          "id": "y",
+          "text": "Alternate option Y for question 10"
+        },
+        {
+          "id": "z",
+          "text": "Alternate option Z for question 10"
+        }
+      ],
+      "correctOptionId": "z"
+    }
+  ]
+}
