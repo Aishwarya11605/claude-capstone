@@ -1,0 +1,6 @@
+node_modules
+dist
+dist-alt
+playwright-report
+test-results
+coverage
