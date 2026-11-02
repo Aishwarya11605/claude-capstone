@@ -14,7 +14,7 @@ describe('persistence.loadAttempt', () => {
   });
 
   it('returns none when nothing is stored', () => {
-    expect(loadAttempt(DaTE.now(), DATA)).toEqual({ status: 'none' });
+    expect(loadAttempt(Date.now(), DATA)).toEqual({ status: 'none' });
   });
 
   it('returns corrupt for unparseable JSON and clears the key', () => {
