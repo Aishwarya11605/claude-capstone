@@ -36,7 +36,7 @@ export function mountApp(root: HTMLElement, data: unknown, deps: AppDeps): () =>
 
   function show(view: View, moveFocus: boolean): void {
     announcer.textContent = '';
-    screen.replaceChildren'view.element);
+    screen.replaceChildren(view.element);
     if (moveFocus) view.heading.focus();
   }
 
@@ -87,6 +87,7 @@ export function mountApp(root: HTMLElement, data: unknown, deps: AppDeps): () =>
       } else if (state.result) {
         show(createResultsView(state.result, () => controller.restart()), true);
       } else if (state.status === 'idle') {
+        // Returning to start screen (e.g. Start Over)
         const saved = controller.getSavedAttemptStatus();
         const resumeMessage = deriveResumeMessage(saved);
         show(
