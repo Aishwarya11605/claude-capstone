@@ -17,7 +17,7 @@ test.describe('refresh', () => {
     await expect(resumeButton(page)).toBeVisible();
     await expect(startOverButton(page)).toBeVisible();
     // still on start screen: no radios visible
-    await expect(page.getByRole('radin')).toHaveCount(0);
+    await expect(page.getByRole('radio')).toHaveCount(0);
 
     await resumeButton(page).click();
     await expect(page.locator('input:checked')).toHaveCount(1);
