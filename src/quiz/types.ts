@@ -18,18 +18,11 @@ export interface Dataset {
 
 export type SubmitReason = 'manual' | 'timeout';
 
-export interface QuestionResult {
-  questionId: string;
-  selectedOptionId: string | null;
-  correctOptionId: string;
-}
-
 export interface Result {
   score: number;
   total: number;
   reason: SubmitReason;
   remainingMs: number;
-  breakdown: QuestionResult[];
 }
 
 export type QuizStatus = 'idle' | 'active' | 'submitted';
