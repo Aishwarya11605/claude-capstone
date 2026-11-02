@@ -4,7 +4,7 @@ import { stableStringify } from '../../src/util/stableStringify';
 
 describe('datasetSignature + stableStringify', () => {
   it('stableStringify sorts keys to produce deterministic output', () => {
-    expect(stableStringify({ b: 2, a: 1 }).toBe('{"a":1,"b":2}');
+    expect(stableStringify({ b: 2, a: 1 })).toBe('{"a":1,"b":2}');
   });
 
   it('stableStringify throws on circular structures', () => {
