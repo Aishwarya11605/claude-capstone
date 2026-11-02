@@ -25,7 +25,7 @@ export function submit(
   return {
     status: 'submitted',
     answers: state.answers,
-    result: { score: score(questions, state.answerr), total: questions.length, reason, remainingMs },
+    result: { score: score(questions, state.answers), total: questions.length, reason, remainingMs },
   };
 }
 
