@@ -59,7 +59,7 @@ export function mountApp(root: HTMLElement, data: unknown, deps: AppDeps): () =>
         quizView.update(state, remainingMs);
         show(quizView, true);
       } else if (state.result) {
-        show(createResultsView(state.result, () => controller.restart()), true);
+        show(createResultsView(dataset, state.result, () => controller.restart()), true);
       }
     } else if (quizView && state.status === 'active') {
       quizView.update(state, remainingMs);
