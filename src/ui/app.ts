@@ -45,7 +45,30 @@ export function mountApp(root: HTMLElement, data: unknown, deps: AppDeps): () =>
   let shownStatus: QuizStatus = 'idle';
   let quizView: QuizView | null = null;
 
-  show(createStartView(dataset, () => controller.start()), false);
+  const saved = controller.getSavedAttemptStatus();
+  const resumeMessage =
+    saved.status === 'corrupt'
+      ? 'A previously saved attempt could not be loaded and was cleared.'
+      : saved.status === 'expired'
+        ? 'A previously saved attempt has expired.'
+        : saved.status === 'incompatible'
+          ? 'A previously saved attempt is not compatible with the current quiz.'
+          : saved.status === 'unavailable'
+            ? 'Saved progress is unavailable in this browser context.'
+            : undefined;
+
+  show(
+    createStartView(
+      dataset,
+      {
+        onStart: () => controller.start(),
+        onResume: () => controller.resume(),
+        onStartOver: () => controller.startOver(),
+      },
+      { showResume: controller.hasSavedAttempt(), resumeMessage },
+    ),
+    false,
+  );
 
   controller.subscribe((state, remainingMs) => {
     if (state.status !== shownStatus) {
@@ -60,6 +83,20 @@ export function mountApp(root: HTMLElement, data: unknown, deps: AppDeps): () =>
         show(quizView, true);
       } else if (state.result) {
         show(createResultsView(state.result, () => controller.restart()), true);
+      } else if (state.status === 'idle') {
+        // Returning to start screen (e.g. Start Over)
+        show(
+          createStartView(
+            dataset,
+            {
+              onStart: () => controller.start(),
+              onResume: () => controller.resume(),
+              onStartOver: () => controller.startOver(),
+            },
+            { showResume: controller.hasSavedAttempt() },
+          ),
+          true,
+        );
       }
     } else if (quizView && state.status === 'active') {
       quizView.update(state, remainingMs);
