@@ -1,8 +1,10 @@
-import { ANNOUNCE_30_MS, ANNOUNCE_60_MS, DURATION_MS, TIMEOUT_NOTICE } from '../config';
+import { DURATION_MS } from '../config';
 import type { Clock, Scheduler, VisibilitySource } from '../platform/clock';
+import { computeDatasetSignature } from './datasetSignature';
+import { loadAttempt, saveAttempt, safeClearAttempt } from './persistence';
 import * as machine from './quizMachine';
 import { Timer } from './timer';
-import type { Dataset, QuizState, SubmitReason } from './types';
+import type { Answers, Dataset, QuizState, SubmitReason } from './types';
 
 export interface ControllerDeps {
   clock: Clock;
@@ -13,20 +15,43 @@ export interface ControllerDeps {
 
 export type ControllerListener = (state: QuizState, remainingMs: number) => void;
 
+export type SavedAttemptStatus =
+  | { status: 'none' }
+  | { status: 'available' }
+  | { status: 'unavailable' | 'corrupt' | 'incompatible' | 'expired' };
+
 export class Controller {
   private state: QuizState = machine.createInitialState();
   private timer: Timer | null = null;
   private remaining = DURATION_MS;
-  private announced60 = false;
-  private announced30 = false;
   private listeners = new Set<ControllerListener>();
   private readonly unsubscribeVisibility: () => void;
+
+  private readonly datasetSignature: string;
+
+  private savedAttemptAvailable = false;
+  private savedAttemptStatus: SavedAttemptStatus = { status: 'none' };
+  private savedDeadlineEpochMs: number | null = null;
 
   constructor(
     private readonly dataset: Dataset,
     private readonly deps: ControllerDeps,
   ) {
     this.unsubscribeVisibility = deps.visibility.subscribe(() => this.timer?.tick());
+    this.datasetSignature = computeDatasetSignature(dataset);
+
+    // Opportunistically check for an attempt on startup so the UI can offer Resume.
+    const loaded = loadAttempt(this.deps.clock.wallNow(), this.datasetSignature);
+    if (loaded.status === 'ok') {
+      this.savedAttemptAvailable = true;
+      this.savedAttemptStatus = { status: 'available' };
+      this.savedDeadlineEpochMs = loaded.attempt.deadlineEpochMs;
+    } else {
+      this.savedAttemptAvailable = false;
+      this.savedDeadlineEpochMs = null;
+      this.savedAttemptStatus =
+        loaded.status === 'none' || loaded.status === 'ok' ? { status: 'none' } : { status: loaded.status };
+    }
   }
 
   getState(): QuizState {
@@ -35,6 +60,14 @@ export class Controller {
 
   getRemainingMs(): number {
     return this.remaining;
+  }
+
+  getSavedAttemptStatus(): SavedAttemptStatus {
+    return this.savedAttemptStatus;
+  }
+
+  hasSavedAttempt(): boolean {
+    return this.savedAttemptAvailable;
   }
 
   subscribe(listener: ControllerListener): () => void {
@@ -54,7 +87,43 @@ export class Controller {
     const next = machine.start(this.state);
     if (next === this.state) return;
     this.state = next;
-    this.beginAttempt();
+    this.beginNewAttempt();
+    this.notify();
+  }
+
+  resume(): void {
+    // Only resume from idle.
+    if (this.state.status !== 'idle') return;
+
+    const loaded = loadAttempt(this.deps.clock.wallNow(), this.datasetSignature);
+    if (loaded.status !== 'ok') {
+      // Attempt disappeared or became invalid since startup.
+      this.savedAttemptAvailable = false;
+      this.savedAttemptStatus = loaded.status === 'none' ? { status: 'none' } : { status: loaded.status };
+      this.notify();
+      return;
+    }
+
+    this.savedAttemptAvailable = true;
+    this.savedAttemptStatus = { status: 'available' };
+    this.savedDeadlineEpochMs = loaded.attempt.deadlineEpochMs;
+
+    this.state = { status: 'active', answers: loaded.attempt.answers, result: null };
+    this.beginAttemptFromDeadline(loaded.attempt.deadlineEpochMs);
+    this.notify();
+  }
+
+  startOver(): void {
+    safeClearAttempt();
+    this.savedAttemptAvailable = false;
+    this.savedAttemptStatus = { status: 'none' };
+    this.savedDeadlineEpochMs = null;
+
+    // Reset state to match normal initial view.
+    this.timer?.stop();
+    this.timer = null;
+    this.remaining = DURATION_MS;
+    this.state = machine.createInitialState();
     this.notify();
   }
 
@@ -63,6 +132,8 @@ export class Controller {
     const next = machine.select(this.state, questionId, optionId);
     if (next === this.state) return;
     this.state = next;
+
+    if (this.state.status === 'active') this.persistActiveAttempt(this.state.answers);
     this.notify();
   }
 
@@ -75,19 +146,51 @@ export class Controller {
     const next = machine.restart(this.state);
     if (next === this.state) return;
     this.state = next;
-    this.beginAttempt();
+    this.beginNewAttempt();
     this.notify();
   }
 
-  private beginAttempt(): void {
-    this.announced60 = false;
-    this.announced30 = false;
-    this.remaining = DURATION_MS;
+  private beginNewAttempt(): void {
+    const deadline = this.deps.clock.wallNow() + DURATION_MS;
+    this.beginAttemptFromDeadline(deadline);
+    if (this.state.status === 'active') this.persistActiveAttempt(this.state.answers);
+  }
+
+  private beginAttemptFromDeadline(deadlineEpochMs: number): void {
+    // Timer uses both monotonic and wall clock; for resume we need to align wallStart such that
+    // remainingMs() derives the correct remaining time.
+    this.remaining = Math.max(0, deadlineEpochMs - this.deps.clock.wallNow());
+
     const timer = new Timer(this.deps.clock, this.deps.scheduler);
-    timer.onTick((remainingMs) => this.handleTick(remainingMs));
+    timer.onTick((remainingMs) => this.handleTick(remainingMs, deadlineEpochMs));
     timer.onExpire(() => this.finish('timeout'));
+
+    // align the timer's internal start points to treat current moment as "now".
+    timer.startFromDeadline(deadlineEpochMs);
+
     this.timer = timer;
-    timer.start();
+
+    // Mark saved attempt data as representing the active attempt.
+    this.savedAttemptAvailable = true;
+    this.savedAttemptStatus = { status: 'available' };
+    this.savedDeadlineEpochMs = deadlineEpochMs;
+  }
+
+  private persistActiveAttempt(answers: Answers): void {
+    if (this.state.status !== 'active') return;
+    if (this.savedDeadlineEpochMs === null) return;
+
+    try {
+      saveAttempt({
+        schemaVersion: 1,
+        datasetSignature: this.datasetSignature,
+        deadlineEpochMs: this.savedDeadlineEpochMs,
+        answers,
+      });
+    } catch {
+      // If storage fails, keep the quiz usable.
+      this.savedAttemptStatus = { status: 'unavailable' };
+    }
   }
 
   private routeIfPastDeadline(): boolean {
@@ -97,19 +200,15 @@ export class Controller {
     return true;
   }
 
-  private handleTick(remainingMs: number): void {
+  private handleTick(remainingMs: number, deadlineEpochMs: number): void {
     if (this.state.status !== 'active') return;
     this.remaining = remainingMs;
+
+    // keep deadline persisted (in case browser throttled and remaining jumps)
+    this.savedDeadlineEpochMs = deadlineEpochMs;
+    this.persistActiveAttempt(this.state.answers);
+
     this.notify();
-    if (remainingMs === 0) return;
-    if (remainingMs <= ANNOUNCE_30_MS && !this.announced30) {
-      this.announced30 = true;
-      this.announced60 = true;
-      this.deps.announce('30 seconds remaining');
-    } else if (remainingMs <= ANNOUNCE_60_MS && !this.announced60) {
-      this.announced60 = true;
-      this.deps.announce('1 minute remaining');
-    }
   }
 
   private finish(reason: SubmitReason): void {
@@ -118,11 +217,19 @@ export class Controller {
     this.timer.stop();
     this.state = machine.submit(this.state, this.dataset.questions, reason, remainingMs);
     this.remaining = remainingMs;
+
+    // Clear persisted attempt on completion.
+    safeClearAttempt();
+    this.savedAttemptAvailable = false;
+    this.savedAttemptStatus = { status: 'none' };
+    this.savedDeadlineEpochMs = null;
+
     this.notify();
+
     const result = this.state.result;
     if (result) {
       const scoreText = `Your score is ${result.score} out of ${result.total}`;
-      this.deps.announce(reason === 'timeout' ? `${TIMEOUT_NOTICE}. ${scoreText}` : scoreText);
+      this.deps.announce(scoreText);
     }
   }
 

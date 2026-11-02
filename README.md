@@ -28,20 +28,9 @@ If PowerShell blocks `npm.ps1` under its execution policy, use Git Bash or `cmd`
 
 ## Continuous integration
 
-No CI workflow file is included. Any CI provider can run this sequence from the project root:
+A GitHub Actions CI workflow is intended to live at `.github/workflows/ci.yml` and run `npm run verify` on pull requests.
 
-```
-npm ci
-npx playwright install --with-deps chromium
-npm run typecheck
-npm run lint
-npm test
-npm run test:coverage
-npm run build
-npm run test:e2e
-```
-
-`npm run verify` runs the typecheck, lint, test, build and E2E steps in one command. Playwright never reuses an already running server (`reuseExistingServer: false`), so every run builds fresh output and fails if a port is busy.
+> Note: adding workflow files may require elevated GitHub token permissions (see PR notes).
 
 ## Project layout
 
@@ -106,7 +95,7 @@ Run `npm run build` and copy the contents of `dist/` to any static web host. Ass
 ## Behaviour notes and limitations
 
 - Client-side only: questions, correct answers, scoring and the timer all run in the browser. Answers can be found by anyone who inspects the page or its network payload. Do not use this for high-stakes or proctored assessment.
-- No persistence: nothing is written to cookies, `localStorage`, `sessionStorage` or IndexedDB. Reloading the page returns to the Start screen and loses any attempt in progress.
+- Persistence: an in-progress attempt is persisted to `localStorage` to enable **Resume** after reload. The app saves selected answers and an **absolute** timer deadline. Saved data is versioned with a schema version and invalidated if the quiz dataset changes.
 - Content-Security-Policy: the production build contains a meta tag (`default-src 'self'; ... connect-src 'none'; ...`). The dev server and the source `index.html` do not, so CSP behaviour is only tested against built output.
 - Timer rule: the elapsed time is the larger of the monotonic clock change and the wall-clock change since Start, and it never goes backwards. Consequences:
   - Moving the system clock backwards does not give extra time.

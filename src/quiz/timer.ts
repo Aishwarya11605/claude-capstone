@@ -32,6 +32,22 @@ export class Timer {
     this.handle = this.scheduler.setInterval(() => this.tick(), TICK_INTERVAL_MS);
   }
 
+  // For resuming: align internal start points such that remainingMs() reflects an absolute deadline.
+  startFromDeadline(deadlineEpochMs: number): void {
+    if (this.started) return;
+    this.started = true;
+
+    const wallNow = this.clock.wallNow();
+    const remaining = Math.max(0, deadlineEpochMs - wallNow);
+    const elapsed = Math.max(0, DURATION_MS - remaining);
+
+    // Set starts so that (now - start) == elapsed.
+    this.monoStart = this.clock.now() - elapsed;
+    this.wallStart = wallNow - elapsed;
+
+    this.handle = this.scheduler.setInterval(() => this.tick(), TICK_INTERVAL_MS);
+  }
+
   stop(): void {
     this.stopped = true;
     if (this.handle !== null) {
