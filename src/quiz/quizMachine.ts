@@ -1,4 +1,4 @@
-import { score } from './scoring';
+import { evaluateQuestions, score } from './scoring';
 import type { Question, QuizState, SubmitReason } from './types';
 
 export function createInitialState(): QuizState {
@@ -22,10 +22,21 @@ export function submit(
   remainingMs: number,
 ): QuizState {
   if (state.status !== 'active') return state;
+  const breakdown = evaluateQuestions(questions, state.answers).map((eval) => ({
+    questionId: eval.questionId,
+    selectedOptionId: eval.selectedOptionId,
+    correctOptionId: eval.correctOptionId,
+  }));
   return {
     status: 'submitted',
     answers: state.answers,
-    result: { score: score(questions, state.answers), total: questions.length, reason, remainingMs },
+    result: {
+      score: score(questions, state.answers),
+      total: questions.length,
+      reason,
+      remainingMs,
+      breakdown,
+    },
   };
 }
 
