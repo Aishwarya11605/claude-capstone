@@ -53,14 +53,14 @@ export function mountApp(root: HTMLElement, data: unknown, deps: AppDeps): () =>
       quizView = null;
       if (state.status === 'active') {
         quizView = createQuizView(dataset, {
-          onElect: (questionId, optionId) => controller.select(questionId, optionId),
+          onSelect: (questionId, optionId) => controller.select(questionId, optionId),
           onSubmit: () => controller.submit(),
         });
-      quizView.update(state, remainingMs);
-      show(quizView, true);
-    } else if (state.result) {
-      show(createResultsView(dataset, state.result, () => controller.restart()), true);
-    }
+        quizView.update(state, remainingMs);
+        show(quizView, true);
+      } else if (state.result) {
+        show(createResultsView(state.result, () => controller.restart()), true);
+      }
     } else if (quizView && state.status === 'active') {
       quizView.update(state, remainingMs);
     }
