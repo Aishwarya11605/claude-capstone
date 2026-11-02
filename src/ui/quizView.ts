@@ -9,7 +9,7 @@ export interface QuizView extends View {
 
 export interface QuizViewHandlers {
   onElect: (questionId: string, optionId: string) => void;
-  // Triggers an immediate submit (no confirmation) - used by timeout auto-submit.
+  // Submit the quiz immediately without confirmation (used for timeout auto-submit).
   onSubmit: () => void;
 }
 
