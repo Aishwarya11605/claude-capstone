@@ -1,5 +1,5 @@
 import type { Clock, Scheduler, VisibilitySource } from '../platform/clock';
-import { Controller } from '../quiz/controller';
+import { Controller, type SavedAttemptStatus } from '../quiz/controller';
 import type { Dataset, QuizStatus } from '../quiz/types';
 import { validateDataset } from '../quiz/validateDataset';
 import { createEl, type View } from './dom';
@@ -14,6 +14,18 @@ export interface AppDeps {
   visibility: VisibilitySource;
 }
 
+function deriveResumeMessage(saved: SavedAttemptStatus): string | undefined {
+  return saved.status === 'corrupt'
+    ? 'A previously saved attempt could not be loaded and was cleared.'
+    : saved.status === 'expired'
+      ? 'A previously saved attempt has expired.'
+      : saved.status === 'incompatible'
+        ? 'A previously saved attempt is not compatible with the current quiz.'
+        : saved.status === 'unavailable'
+          ? 'Saved progress is unavailable in this browser context.'
+          : undefined;
+}
+
 export function mountApp(root: HTMLElement, data: unknown, deps: AppDeps): () => void {
   root.replaceChildren();
   const announcer = createEl('div', 'visually-hidden');
@@ -24,7 +36,7 @@ export function mountApp(root: HTMLElement, data: unknown, deps: AppDeps): () =>
 
   function show(view: View, moveFocus: boolean): void {
     announcer.textContent = '';
-    screen.replaceChildren(view.element);
+    screen.replaceChildren'view.element);
     if (moveFocus) view.heading.focus();
   }
 
@@ -45,17 +57,8 @@ export function mountApp(root: HTMLElement, data: unknown, deps: AppDeps): () =>
   let shownStatus: QuizStatus = 'idle';
   let quizView: QuizView | null = null;
 
-  const saved = controller.getSavedAttemptStatus();
-  const resumeMessage =
-    saved.status === 'corrupt'
-      ? 'A previously saved attempt could not be loaded and was cleared.'
-      : saved.status === 'expired'
-        ? 'A previously saved attempt has expired.'
-        : saved.status === 'incompatible'
-          ? 'A previously saved attempt is not compatible with the current quiz.'
-          : saved.status === 'unavailable'
-            ? 'Saved progress is unavailable in this browser context.'
-            : undefined;
+  const initialSaved = controller.getSavedAttemptStatus();
+  const initialResumeMessage = deriveResumeMessage(initialSaved);
 
   show(
     createStartView(
@@ -65,7 +68,7 @@ export function mountApp(root: HTMLElement, data: unknown, deps: AppDeps): () =>
         onResume: () => controller.resume(),
         onStartOver: () => controller.startOver(),
       },
-      { showResume: controller.hasSavedAttempt(), resumeMessage },
+      { showResume: controller.hasSavedAttempt(), resumeMessage: initialResumeMessage },
     ),
     false,
   );
@@ -84,7 +87,8 @@ export function mountApp(root: HTMLElement, data: unknown, deps: AppDeps): () =>
       } else if (state.result) {
         show(createResultsView(state.result, () => controller.restart()), true);
       } else if (state.status === 'idle') {
-        // Returning to start screen (e.g. Start Over)
+        const saved = controller.getSavedAttemptStatus();
+        const resumeMessage = deriveResumeMessage(saved);
         show(
           createStartView(
             dataset,
@@ -93,7 +97,7 @@ export function mountApp(root: HTMLElement, data: unknown, deps: AppDeps): () =>
               onResume: () => controller.resume(),
               onStartOver: () => controller.startOver(),
             },
-            { showResume: controller.hasSavedAttempt() },
+            { showResume: controller.hasSavedAttempt(), resumeMessage },
           ),
           true,
         );
